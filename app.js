@@ -102,7 +102,7 @@ app.patch('/todos/:id', (req, res) => {
         return res.status(404).json({ message: "Todo not found" });
     }
     // Extract fields from request body
-    const { task, description, status } = req.body;
+    const {task, description, status} = req.body;
     // Helper validation (optional but clean)
     const isValidString = (value) =>
         typeof value === "string" && value.trim().length > 0;
@@ -127,6 +127,11 @@ app.patch('/todos/:id', (req, res) => {
         }
         todo.status = status;
     }
+
+    res.status(200).json({
+    message: "Todo updated successfully",
+    updatedTodo: todo
+    });
 });
 
 // DELETE - Remove a todo item by ID
