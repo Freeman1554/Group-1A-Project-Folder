@@ -15,8 +15,8 @@ app.get('/', (req, res) => {
 
 // In-memory data store for todos
 let todos = [
-    { id: 1, task: "Learn Node.js", description: "Understand basics of Node", status: "pending", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
-    { id: 2, task: "Build CRUD API", description: "Practice Express routing", status: "pending", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
+    { id: 1, task: "Learn Node.js", description: "Understand basics of Node", status: "pending"},
+    { id: 2, task: "Build CRUD API", description: "Practice Express routing", status: "pending"}
 ];
 
 // Initialize currentId based on existing todos to ensure unique IDs for new todos
@@ -77,13 +77,12 @@ app.post('/todos', (req, res) => {
     if (existingTask) {
         return res.status(409).json({ error: "Task already exists" });
     }
+
     const newTodo = {
         id: ++currentId, // Increment ID for new todo
         task: cleanTask, // Store trimmed task
         description: cleanDescription, // Store trimmed description
         status: "pending", // Default status
-        createdAt: new Date().toISOString(), // Store timestamps as ISO strings for consistency
-        updatedAt: new Date().toISOString()
     };
     // Add new todo to the array
     todos.push(newTodo);
@@ -128,10 +127,6 @@ app.patch('/todos/:id', (req, res) => {
         }
         todo.status = status;
     }
-    // Update timestamp
-    todo.updatedAt = new Date().toISOString();
-    // Return updated todo
-    res.status(200).json(todo);
 });
 
 // DELETE - Remove a todo item by ID
