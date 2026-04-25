@@ -15,10 +15,11 @@ app.get('/', (req, res) => {
 
 // In-memory data store for todos
 let todos = [
-    { id: 1, task: "Learn Node.js", status: "pending", createdAt: new Date(), updatedAt: new Date() },
-    { id: 2, task: "Build CRUD API", status: "pending", createdAt: new Date(), updatedAt: new Date() }
+    { id: 1, task: "Learn Node.js", description: "Understand basics of Node", status: "pending", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() },
+    { id: 2, task: "Build CRUD API", description: "Practice Express routing", status: "pending", createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }
 ];
 
+// Initialize currentId based on existing todos to ensure unique IDs for new todos
 let currentId = todos.length
     ? Math.max(...todos.map(t => t.id))
     : 0;
@@ -60,18 +61,29 @@ app.get('/todos/:id', (req, res) => {
 
 // POST - Create a new todo item
 app.post('/todos', (req, res) => {
-    const { task } = req.body;
+    const {task, description } = req.body;
     // Validation
     if (!task || task.trim() === "") {
         return res.status(400).json({ error: "Task field is required" });
     }
+    // Validate description (optional but recommended)
+    if (!description || description.trim() === "") {
+        return res.status(400).json({ error: "Description is required" });
+    }
     const cleanTask = task.trim(); // Trim whitespace from task
+    const cleanDescription = description.trim(); // Trim whitespace from description
+    // Check for duplicate task
+    const existingTask = todos.find(t => t.task.toLowerCase() === cleanTask.toLowerCase());
+    if (existingTask) {
+        return res.status(409).json({ error: "Task already exists" });
+    }
     const newTodo = {
         id: ++currentId, // Increment ID for new todo
         task: cleanTask, // Store trimmed task
+        description: cleanDescription, // Store trimmed description
         status: "pending", // Default status
-        createdAt: new Date(), // Set creation timestamp
-        updatedAt: new Date()  // Set update timestamp
+        createdAt: new Date().toISOString(), // Store timestamps as ISO strings for consistency
+        updatedAt: new Date().toISOString()
     };
     // Add new todo to the array
     todos.push(newTodo);
@@ -91,7 +103,7 @@ app.patch('/todos/:id', (req, res) => {
         return res.status(404).json({ message: "Todo not found" });
     }
     // Extract fields from request body
-    const { task, status } = req.body;
+    const { task, description, status } = req.body;
     // Helper validation (optional but clean)
     const isValidString = (value) =>
         typeof value === "string" && value.trim().length > 0;
@@ -102,6 +114,13 @@ app.patch('/todos/:id', (req, res) => {
         }
         todo.task = task.trim();
     }
+    // Update description (if provided)
+    if (description !== undefined) {
+        if (typeof description !== "string" || description.trim() === "") {
+            return res.status(400).json({ error: "Description must be a non-empty string" });
+        }
+        todo.description = description.trim();
+    }
     // Update status (if provided)
     if (status !== undefined) {
         if (!["pending", "completed"].includes(status)) {
@@ -110,7 +129,7 @@ app.patch('/todos/:id', (req, res) => {
         todo.status = status;
     }
     // Update timestamp
-    todo.updatedAt = new Date();
+    todo.updatedAt = new Date().toISOString();
     // Return updated todo
     res.status(200).json(todo);
 });
@@ -129,11 +148,11 @@ app.delete('/todos/:id', (req, res) => {
         return res.status(404).json({ error: "Todo not found" });
     }
     // Remove todo safely
-    const deletedTodo = todos.splice(todoIndex, 1);
+    const [deletedTodo] = todos.splice(todoIndex, 1);
     // Return response
     res.status(200).json({
         message: "Todo deleted successfully",
-        deleted: deletedTodo[0],
+        deleted: deletedTodo,
         remainingTodos: todos.length
     });
 });
